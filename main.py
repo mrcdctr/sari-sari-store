@@ -7,7 +7,6 @@ from analytics import InventoryAnalytics
 from supply_chain import SupplyChainManager
 from datetime import datetime
 
-
 class SariSariStoreApp:
     def __init__(self, root):
         self.root = root
@@ -18,7 +17,7 @@ class SariSariStoreApp:
         self.reports = ReportGenerator()
         self.analytics = InventoryAnalytics()
         self.supply = SupplyChainManager()
-
+        
         self.create_widgets()
 
     def create_widgets(self):
@@ -74,17 +73,16 @@ class SariSariStoreApp:
         ttk.Button(input_frame, text="Update Product", command=self.update_product).grid(row=5, column=1, pady=10)
         ttk.Button(input_frame, text="Delete Product", command=self.delete_product).grid(row=5, column=2, pady=10)
 
-        self.tree = ttk.Treeview(frame, columns=("ID", "Name", "Quantity", "Price", "Barcode", "Supplier"),
-                                 show="headings")
+        self.tree = ttk.Treeview(frame, columns=("ID", "Name", "Quantity", "Price", "Barcode", "Supplier"), show="headings")
         self.tree.grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E, tk.N, tk.S))
-
+        
         self.tree.heading("ID", text="ID")
         self.tree.heading("Name", text="Product Name")
         self.tree.heading("Quantity", text="Quantity")
         self.tree.heading("Price", text="Price")
         self.tree.heading("Barcode", text="Barcode")
         self.tree.heading("Supplier", text="Supplier")
-
+        
         self.tree.column("ID", width=50)
         self.tree.column("Name", width=150)
         self.tree.column("Quantity", width=80)
@@ -102,20 +100,26 @@ class SariSariStoreApp:
         ttk.Label(scan_frame, text="Scan Barcode/QR:").grid(row=0, column=0, padx=5, pady=5)
         self.scan_entry = ttk.Entry(scan_frame)
         self.scan_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.scan_entry.bind("<Return>", self.scan_product)  # Bind Enter key to scan
         ttk.Button(scan_frame, text="Scan", command=self.scan_product).grid(row=0, column=2, padx=5, pady=5)
 
-        self.cart_tree = ttk.Treeview(frame, columns=("Name", "Price"), show="headings")
+        self.cart_tree = ttk.Treeview(frame, columns=("Name", "Price", "Barcode"), show="headings")
         self.cart_tree.grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
-
+        
         self.cart_tree.heading("Name", text="Product Name")
         self.cart_tree.heading("Price", text="Price")
+        self.cart_tree.heading("Barcode", text="Barcode")
         self.cart_tree.column("Name", width=200)
         self.cart_tree.column("Price", width=100)
+        self.cart_tree.column("Barcode", width=120)
 
         self.total_label = ttk.Label(frame, text="Total: ₱0.00")
         self.total_label.grid(row=2, column=0, pady=5)
         ttk.Button(frame, text="Checkout", command=self.checkout).grid(row=3, column=0, pady=5)
         ttk.Button(frame, text="Clear Cart", command=self.clear_cart).grid(row=4, column=0, pady=5)
+
+        # Scanner instructions
+        ttk.Label(frame, text="Scanner Instructions: Connect USB scanner or type barcode and press Enter").grid(row=5, column=0, pady=5)
 
     def create_reports_widgets(self, frame):
         date_frame = ttk.Frame(frame, padding="10")
@@ -138,22 +142,22 @@ class SariSariStoreApp:
         analytics_frame = ttk.Frame(frame, padding="10")
         analytics_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
-        ttk.Button(analytics_frame, text="Low Stock Alert",
-                   command=self.show_low_stock).grid(row=0, column=0, padx=5, pady=5)
-        ttk.Button(analytics_frame, text="Sales Trend (30 Days)",
-                   command=self.show_sales_trend).grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(analytics_frame, text="Top Products",
-                   command=self.show_top_products).grid(row=0, column=2, padx=5, pady=5)
-
+        ttk.Button(analytics_frame, text="Low Stock Alert", 
+                  command=self.show_low_stock).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Sales Trend (30 Days)", 
+                  command=self.show_sales_trend).grid(row=0, column=1, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Top Products", 
+                  command=self.show_top_products).grid(row=0, column=2, padx=5, pady=5)
+        
         ttk.Label(analytics_frame, text="Forecast Method:").grid(row=1, column=0, padx=5, pady=5)
         self.forecast_method = ttk.Combobox(analytics_frame, values=["sma", "exp", "lr"])
         self.forecast_method.set("sma")
         self.forecast_method.grid(row=1, column=1, padx=5, pady=5)
-        ttk.Button(analytics_frame, text="Forecast Sales",
-                   command=self.show_forecast).grid(row=1, column=2, padx=5, pady=5)
-
-        ttk.Button(analytics_frame, text="Optimize Inventory",
-                   command=self.show_optimization).grid(row=2, column=0, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Forecast Sales", 
+                  command=self.show_forecast).grid(row=1, column=2, padx=5, pady=5)
+        
+        ttk.Button(analytics_frame, text="Optimize Inventory", 
+                  command=self.show_optimization).grid(row=2, column=0, padx=5, pady=5)
 
         self.analytics_text = tk.Text(frame, height=25, width=80)
         self.analytics_text.grid(row=1, column=0, padx=10, pady=10)
@@ -177,17 +181,16 @@ class SariSariStoreApp:
         ttk.Button(supplier_frame, text="Add Supplier", command=self.add_supplier).grid(row=3, column=0, pady=10)
         ttk.Button(supplier_frame, text="Update Supplier", command=self.update_supplier).grid(row=3, column=1, pady=10)
         ttk.Button(supplier_frame, text="Delete Supplier", command=self.delete_supplier).grid(row=3, column=2, pady=10)
-        ttk.Button(supplier_frame, text="Reorder Recommendation", command=self.show_reorder).grid(row=3, column=3,
-                                                                                                  pady=10)
+        ttk.Button(supplier_frame, text="Reorder Recommendation", command=self.show_reorder).grid(row=3, column=3, pady=10)
 
         self.supplier_tree = ttk.Treeview(frame, columns=("ID", "Name", "Contact", "LeadTime"), show="headings")
         self.supplier_tree.grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
-
+        
         self.supplier_tree.heading("ID", text="ID")
         self.supplier_tree.heading("Name", text="Name")
         self.supplier_tree.heading("Contact", text="Contact")
         self.supplier_tree.heading("LeadTime", text="Lead Time")
-
+        
         self.supplier_tree.column("ID", width=50)
         self.supplier_tree.column("Name", width=150)
         self.supplier_tree.column("Contact", width=200)
@@ -296,23 +299,23 @@ class SariSariStoreApp:
                 self.clear_entries()
             messagebox.showinfo("Result", message)
 
-    def scan_product(self):
-        barcode = self.scan_entry.get()
+    def scan_product(self, event=None):  # event=None allows both button and Enter key triggering
+        barcode = self.scan_entry.get().strip()
         if not barcode:
-            messagebox.showerror("Error", "Please enter a barcode")
+            messagebox.showerror("Error", "Please enter or scan a barcode")
             return
 
         success, message = self.pos.scan_item(barcode)
         if success:
             self.refresh_cart()
             self.scan_entry.delete(0, tk.END)
-        messagebox.showinfo("Result", message)
+        messagebox.showinfo("Scan Result", message)
 
     def refresh_cart(self):
         for item in self.cart_tree.get_children():
             self.cart_tree.delete(item)
-        for item in self.pos.cart:
-            self.cart_tree.insert("", "end", values=(item[1], item[3]))
+        for item in self.pos.get_cart_items():
+            self.cart_tree.insert("", "end", values=(item[1], f"₱{item[3]:.2f}", item[4]))
         self.total_label.config(text=f"Total: ₱{self.pos.get_cart_total():.2f}")
 
     def checkout(self):
@@ -329,7 +332,7 @@ class SariSariStoreApp:
     def generate_report(self):
         start_date = self.start_date.get()
         end_date = self.end_date.get()
-
+        
         if not all([start_date, end_date]):
             messagebox.showerror("Error", "Please enter both dates")
             return
@@ -365,7 +368,7 @@ class SariSariStoreApp:
         if not selected_item:
             messagebox.showerror("Error", "Please select a product from Inventory tab first")
             return
-
+        
         try:
             product_id = int(self.tree.item(selected_item)['values'][0])
             method = self.forecast_method.get()
@@ -380,7 +383,7 @@ class SariSariStoreApp:
         if not selected_item:
             messagebox.showerror("Error", "Please select a product from Inventory tab first")
             return
-
+        
         try:
             product_id = int(self.tree.item(selected_item)['values'][0])
             report = self.analytics.optimize_inventory(product_id)
@@ -457,12 +460,11 @@ class SariSariStoreApp:
         if not selected_item:
             messagebox.showerror("Error", "Please select a product from Inventory tab first")
             return
-
+        
         product = self.tree.item(selected_item)['values']
         report = self.supply.get_reorder_recommendation(product)
         self.supply_text.delete(1.0, tk.END)
         self.supply_text.insert(tk.END, report)
-
 
 if __name__ == "__main__":
     root = tk.Tk()

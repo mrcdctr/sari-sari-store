@@ -14,6 +14,8 @@ class InventoryManager:
             return True, "Product added successfully"
         except ValueError:
             return False, "Invalid quantity or price format"
+        except Exception as e:
+            return False, f"Error adding product: {str(e)}"
 
     def get_items(self):
         return self.db.get_all_products()
@@ -31,7 +33,12 @@ class InventoryManager:
             return True, "Product updated successfully"
         except ValueError:
             return False, "Invalid quantity or price format"
+        except Exception as e:
+            return False, f"Error updating product: {str(e)}"
 
     def delete_item(self, product_id):
-        self.db.delete_product(product_id)
-        return True, "Product deleted successfully"
+        try:
+            self.db.delete_product(product_id)
+            return True, "Product deleted successfully"
+        except Exception as e:
+            return False, f"Error deleting product: {str(e)}"

@@ -14,6 +14,7 @@ A complete inventory management system for small retail stores (Sari-Sari stores
 - Barcode/QR scanning for quick sales
 - Cart management with total calculation
 - Checkout processing with automatic inventory adjustment
+- **Barcode Scanner Support**: Use a USB barcode scanner or manual entry to add items to the cart quickly. Supports real-time stock updates and detailed cart display.
 
 ### Reports
 - Customizable sales reports by date range
@@ -148,6 +149,8 @@ The system has been thoroughly tested:
 - Multi-user support
 - Receipt printing
 - Advanced barcode scanner integration
+- Mobile camera scanning
+- Inventory tracking system
 
 ## Contributing
 Contributions are welcome! Please:
