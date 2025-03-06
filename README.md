@@ -61,7 +61,7 @@ project_folder/
 ## Installation
 1. Clone or download this repository:
 
-   git clone https://github.com/mrcdctr/Sari-Sari-Store-Inventory-System.git
+   git clone [[https://github.com/mrcdctr/sari-sari-store.git]
 
 2. Navigate to the project folder:
 
