@@ -1,165 +1,107 @@
-# Sari-Sari Store Inventory System
+Sari-Sari Store Management System
 
-A complete inventory management system for small retail stores (Sari-Sari stores) built with Python, Tkinter GUI, and SQLite. This system provides tools for inventory tracking, point of sale operations, sales reporting, advanced analytics, and supply chain management.
+A Python-based desktop application for managing a small retail store (sari-sari store). Built with Tkinter, this system provides inventory tracking, point-of-sale (POS) functionality, sales reporting, analytics, and supply chain management.
 
-## Features
+Features
+User Authentication: Secure login and registration with password hashing (bcrypt).
+Inventory Management: Add, update, delete, and view product details with transaction history.
+Point of Sale (POS): Scan products via barcode (manual entry or webcam), manage cart, and process checkouts.
+Reports: Generate sales reports for specified date ranges.
+Analytics: Monitor low stock, sales trends, top products, and forecast demand with visualization (Matplotlib).
+Supply Chain: Manage suppliers and get reorder recommendations.
 
-### Inventory Management
-- Add, update, and delete products
-- Barcode/QR code support
-- Supplier linking for products
-- Real-time inventory updates
+Requirements
+Python 3.12+
 
-### Point of Sale (POS)
-- Barcode/QR scanning for quick sales
-- Cart management with total calculation
-- Checkout processing with automatic inventory adjustment
-- **Barcode Scanner Support**: Use a USB barcode scanner or manual entry to add items to the cart quickly. Supports real-time stock updates and detailed cart display.
+Virtual environment (recommended)
 
-### Reports
-- Customizable sales reports by date range
-- Detailed breakdown of sales by product and date
+Dependencies:
+bcrypt
 
-### Analytics
-- **Low Stock Alerts**: Identify items with quantity ≤ 10
-- **Sales Trends**: Analyze sales over the last 30 days
-- **Top Products**: Rank top 5 products by sales volume
-- **Sales Forecasting**:
-  - Simple Moving Average (SMA)
-  - Exponential Smoothing (EXP, α=0.3)
-  - Linear Regression (LR)
-  - 7-day forecasts based on 30-day history
-- **Inventory Optimization**:
-  - Economic Order Quantity (EOQ)
-  - Safety Stock (2 days of average demand)
-  - Reorder Point calculation
+matplotlib
 
-### Supply Chain Management
-- Manage suppliers (add, update, delete)
-- Assign suppliers to products
-- Reorder recommendations based on stock levels and lead times
+opencv-python
 
-## File Structure
+numpy
 
-project_folder/
-│
-├── main.py              # Main application with GUI
-├── inventory.py        # Inventory management logic
-├── database.py         # SQLite database operations with schema migration
-├── pos.py             # Point of Sale functionality
-├── reports.py         # Sales reporting
-├── analytics.py        # Analytics, forecasting, and optimization
-├── supply_chain.py     # Supplier and supply chain management
-└── inventory.db        # SQLite database (auto-created)
+pyzbar
 
-## Requirements
-- **Python 3.x**
-- **Tkinter** (included with Python)
-- **SQLite3** (included with Python)
-- **NumPy** (for Linear Regression forecasting)
-  - Install with: `pip install numpy`
+Setup
+Clone the Repository:
 
-## Installation
-1. Clone or download this repository:
+git clone https://github.com/yourusername/sari-sari-store.git
+cd sari-sari-store
 
-   git clone [[https://github.com/mrcdctr/sari-sari-store.git]
+Create and Activate a Virtual Environment:
+Windows:
 
-2. Navigate to the project folder:
+python -m venv .venv
+.venv\Scripts\activate
 
-   cd project_folder
+Linux/macOS:
 
-3. Install the required dependency:
+python3 -m venv .venv
+source .venv/bin/activate
 
-   pip install numpy
+Install Dependencies:
 
-4. Run the application:
+pip install bcrypt matplotlib opencv-python numpy pyzbar
 
-   python main.py
+Run the Application:
 
-## Usage
-1. Launch the application with `python main.py`.
-2. Use the tabbed interface to access features:
-- **Inventory**: Manage products and view stock
-- **Point of Sale**: Process sales transactions
-- **Reports**: Generate sales reports
-- **Analytics**: Analyze trends, forecast sales, and optimize inventory
-- **Supply Chain**: Manage suppliers and reorder recommendations
+python main.py
 
-### Inventory Management
-- Add products with name, quantity, price, barcode, and optional supplier
-- Update or delete products from the table
-- View all products with supplier details
+Usage
+Login or Register:
+Launch the app and register a new user (e.g., username: admin, password: password123).
 
-### Point of Sale
-- Enter barcodes manually or use a scanner
-- Add items to cart, view total, and checkout
-- Clear cart as needed
+Log in with your credentials.
 
-### Reports
-- Input start and end dates (YYYY-MM-DD format)
-- Generate detailed sales reports
+Main Interface:
+Inventory Tab: Manage products (add, update, delete) and view transaction history.
 
-### Analytics
-- **Low Stock Alert**: View items needing restock
-- **Sales Trend**: See 30-day sales summary
-- **Top Products**: List top 5 sellers
-- **Forecast Sales**: Select a product, choose a method (SMA, EXP, LR), and view 7-day forecast
-- **Optimize Inventory**: Select a product to calculate EOQ, safety stock, and reorder point
+POS Tab: Scan items (type barcode or use webcam), add to cart, and checkout.
 
-### Supply Chain
-- Add suppliers with name, contact, and lead time
-- Update or delete suppliers
-- View reorder recommendations for selected products
+Reports Tab: Enter date range (YYYY-MM-DD) to generate sales reports.
 
-## Database
-- Uses SQLite (`inventory.db`) for persistent storage
-- Automatically creates tables on first run
-- Includes schema migration to add `supplier_id` column to existing databases
-- Stores inventory, sales, and supplier data
+Analytics Tab: Check stock alerts, trends, and forecasts; plot data visualizations.
 
-## Notes
-- **Barcode/QR Scanning**: Assumes a scanner that inputs data as keyboard input
-- **Forecasting**: Requires at least 3 days of sales history
-- **Optimization**: Default costs (ordering=₱50, holding=20% of unit price) can be adjusted in `analytics.py`
-- **Schema Migration**: Automatically updates older databases to include `supplier_id`
+Supply Chain Tab: Add/update suppliers and view reorder suggestions.
 
-## Testing
-The system has been thoroughly tested:
-- **Inventory**: CRUD operations, supplier linking
-- **POS**: Scanning, checkout, inventory updates
-- **Reports**: Date range validation, report generation
-- **Analytics**: All forecasting methods (SMA, EXP, LR), optimization calculations
-- **Supply Chain**: Supplier management, reorder recommendations
-- **Database**: Schema creation and migration
+Exit: Close the window to exit the application.
 
-## Troubleshooting
-- **Error: "no such column: i.supplier_id"**: Fixed with schema migration in `database.py`. Run the updated code to resolve.
-- **Missing NumPy**: Install with `pip install numpy`.
-- **Invalid Inputs**: Error messages will guide you to correct inputs.
+Database
+Uses SQLite (inventory.db) to store:
+Users (username, hashed password)
 
-## Limitations
-- No user authentication
-- Single-user system
-- Text-based analytics (no graphical charts)
-- Basic barcode scanning support
+Inventory (products, quantities, prices, barcodes)
 
-## Future Enhancements
-- User login system
-- Graphical charts for analytics
-- Multi-user support
-- Receipt printing
-- Advanced barcode scanner integration
-- Mobile camera scanning
-- Inventory tracking system
+Sales (transactions)
 
-## Contributing
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request with your changes
+Suppliers (details)
 
-## License
-This project is licensed under the MIT License.
+Inventory transactions (history)
+
+Troubleshooting
+App Closes After Login: Ensure all dependencies are installed and check console output for errors.
+
+Camera Scan Fails: Verify webcam access and opencv-python/pyzbar installation.
+
+Errors: Run with python -m main for detailed stack traces.
+
+Contributing
+Fork the repository.
+
+Create a feature branch (git checkout -b feature-name).
+
+Commit changes (git commit -m "Add feature").
+
+Push to the branch (git push origin feature-name).
+
+Open a pull request.
+
+License
+This project is licensed under the MIT License—see LICENSE for details.
 
 ## Contact
 Developed by Marco Doctor - March 2025

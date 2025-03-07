@@ -1,50 +1,88 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 from inventory import InventoryManager
 from pos import POS
 from reports import ReportGenerator
 from analytics import InventoryAnalytics
 from supply_chain import SupplyChainManager
+from login import LoginWindow
 from datetime import datetime
+import cv2
+from pyzbar.pyzbar import decode
 
 class SariSariStoreApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Sari-Sari Store System")
-        self.root.geometry("1000x700")
-        self.inventory = InventoryManager()
-        self.pos = POS()
-        self.reports = ReportGenerator()
-        self.analytics = InventoryAnalytics()
-        self.supply = SupplyChainManager()
-        
-        self.create_widgets()
+        self.root.title("Sari-Sari Store System - Login")
+        self.root.geometry("300x200")
+        self.user_id = None
+        print("Initializing LoginWindow")
+        try:
+            LoginWindow(self.root, self.start_main_app)
+        except Exception as e:
+            print(f"Error initializing LoginWindow: {str(e)}")
+            messagebox.showerror("Error", f"Initialization failed: {str(e)}")
+
+    def start_main_app(self, user_id):
+        print(f"Starting main app with user_id: {user_id}")
+        self.user_id = user_id
+        try:
+            self.root.title("Sari-Sari Store System")
+            self.root.geometry("1000x700")
+            print("Window resized to 1000x700")
+            self.inventory = InventoryManager()
+            self.pos = POS()
+            self.pos.set_user(user_id)
+            self.reports = ReportGenerator()
+            self.analytics = InventoryAnalytics()
+            self.supply = SupplyChainManager()
+            print("Managers initialized")
+            self.create_widgets()
+            print("Main app UI setup complete")
+            self.root.update()
+        except Exception as e:
+            print(f"Error in start_main_app: {str(e)}")
+            messagebox.showerror("Error", f"Failed to initialize main app: {str(e)}")
 
     def create_widgets(self):
-        notebook = ttk.Notebook(self.root)
-        notebook.pack(pady=10, expand=True)
+        print("Entering create_widgets")
+        try:
+            notebook = ttk.Notebook(self.root)
+            notebook.pack(pady=10, expand=True, fill="both")
+            print("Notebook created")
 
-        inventory_frame = ttk.Frame(notebook)
-        notebook.add(inventory_frame, text="Inventory")
-        self.create_inventory_widgets(inventory_frame)
+            inventory_frame = ttk.Frame(notebook)
+            notebook.add(inventory_frame, text="Inventory")
+            self.create_inventory_widgets(inventory_frame)
+            print("Inventory tab created")
 
-        pos_frame = ttk.Frame(notebook)
-        notebook.add(pos_frame, text="Point of Sale")
-        self.create_pos_widgets(pos_frame)
+            pos_frame = ttk.Frame(notebook)
+            notebook.add(pos_frame, text="Point of Sale")
+            self.create_pos_widgets(pos_frame)
+            print("POS tab created")
 
-        reports_frame = ttk.Frame(notebook)
-        notebook.add(reports_frame, text="Reports")
-        self.create_reports_widgets(reports_frame)
+            reports_frame = ttk.Frame(notebook)
+            notebook.add(reports_frame, text="Reports")
+            self.create_reports_widgets(reports_frame)
+            print("Reports tab created")
 
-        analytics_frame = ttk.Frame(notebook)
-        notebook.add(analytics_frame, text="Analytics")
-        self.create_analytics_widgets(analytics_frame)
+            analytics_frame = ttk.Frame(notebook)
+            notebook.add(analytics_frame, text="Analytics")
+            self.create_analytics_widgets(analytics_frame)
+            print("Analytics tab created")
 
-        supply_frame = ttk.Frame(notebook)
-        notebook.add(supply_frame, text="Supply Chain")
-        self.create_supply_widgets(supply_frame)
+            supply_frame = ttk.Frame(notebook)
+            notebook.add(supply_frame, text="Supply Chain")
+            self.create_supply_widgets(supply_frame)
+            print("Supply Chain tab created")
+
+            print("All widgets created successfully")
+        except Exception as e:
+            print(f"Error in create_widgets: {str(e)}")
+            messagebox.showerror("Error", f"Widget creation failed: {str(e)}")
 
     def create_inventory_widgets(self, frame):
+        print("Creating inventory widgets")
         input_frame = ttk.Frame(frame, padding="10")
         input_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
@@ -72,6 +110,7 @@ class SariSariStoreApp:
         ttk.Button(input_frame, text="Add Product", command=self.add_product).grid(row=5, column=0, pady=10)
         ttk.Button(input_frame, text="Update Product", command=self.update_product).grid(row=5, column=1, pady=10)
         ttk.Button(input_frame, text="Delete Product", command=self.delete_product).grid(row=5, column=2, pady=10)
+        ttk.Button(input_frame, text="View Transactions", command=self.show_transactions).grid(row=5, column=3, pady=10)
 
         self.tree = ttk.Treeview(frame, columns=("ID", "Name", "Quantity", "Price", "Barcode", "Supplier"), show="headings")
         self.tree.grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -93,6 +132,9 @@ class SariSariStoreApp:
         self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
         self.refresh_inventory()
 
+        self.transaction_text = tk.Text(frame, height=10, width=80)
+        self.transaction_text.grid(row=2, column=0, padx=10, pady=10)
+
     def create_pos_widgets(self, frame):
         scan_frame = ttk.Frame(frame, padding="10")
         scan_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
@@ -100,26 +142,28 @@ class SariSariStoreApp:
         ttk.Label(scan_frame, text="Scan Barcode/QR:").grid(row=0, column=0, padx=5, pady=5)
         self.scan_entry = ttk.Entry(scan_frame)
         self.scan_entry.grid(row=0, column=1, padx=5, pady=5)
-        self.scan_entry.bind("<Return>", self.scan_product)  # Bind Enter key to scan
+        self.scan_entry.bind("<Return>", self.scan_product)
         ttk.Button(scan_frame, text="Scan", command=self.scan_product).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Button(scan_frame, text="Camera Scan", command=self.camera_scan).grid(row=0, column=3, padx=5, pady=5)
 
-        self.cart_tree = ttk.Treeview(frame, columns=("Name", "Price", "Barcode"), show="headings")
+        self.cart_tree = ttk.Treeview(frame, columns=("Name", "Price", "Barcode", "Quantity"), show="headings")
         self.cart_tree.grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
         
         self.cart_tree.heading("Name", text="Product Name")
         self.cart_tree.heading("Price", text="Price")
         self.cart_tree.heading("Barcode", text="Barcode")
+        self.cart_tree.heading("Quantity", text="Quantity")
         self.cart_tree.column("Name", width=200)
         self.cart_tree.column("Price", width=100)
         self.cart_tree.column("Barcode", width=120)
+        self.cart_tree.column("Quantity", width=80)
 
         self.total_label = ttk.Label(frame, text="Total: ₱0.00")
         self.total_label.grid(row=2, column=0, pady=5)
         ttk.Button(frame, text="Checkout", command=self.checkout).grid(row=3, column=0, pady=5)
         ttk.Button(frame, text="Clear Cart", command=self.clear_cart).grid(row=4, column=0, pady=5)
 
-        # Scanner instructions
-        ttk.Label(frame, text="Scanner Instructions: Connect USB scanner or type barcode and press Enter").grid(row=5, column=0, pady=5)
+        ttk.Label(frame, text="Scanner Instructions: Use USB scanner or camera scan").grid(row=5, column=0, pady=5)
 
     def create_reports_widgets(self, frame):
         date_frame = ttk.Frame(frame, padding="10")
@@ -142,24 +186,22 @@ class SariSariStoreApp:
         analytics_frame = ttk.Frame(frame, padding="10")
         analytics_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
-        ttk.Button(analytics_frame, text="Low Stock Alert", 
-                  command=self.show_low_stock).grid(row=0, column=0, padx=5, pady=5)
-        ttk.Button(analytics_frame, text="Sales Trend (30 Days)", 
-                  command=self.show_sales_trend).grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(analytics_frame, text="Top Products", 
-                  command=self.show_top_products).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Low Stock Alert", command=self.show_low_stock).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Sales Trend", command=self.show_sales_trend).grid(row=0, column=1, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Top Products", command=self.show_top_products).grid(row=0, column=2, padx=5, pady=5)
         
         ttk.Label(analytics_frame, text="Forecast Method:").grid(row=1, column=0, padx=5, pady=5)
         self.forecast_method = ttk.Combobox(analytics_frame, values=["sma", "exp", "lr"])
         self.forecast_method.set("sma")
         self.forecast_method.grid(row=1, column=1, padx=5, pady=5)
-        ttk.Button(analytics_frame, text="Forecast Sales", 
-                  command=self.show_forecast).grid(row=1, column=2, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Forecast Sales", command=self.show_forecast).grid(row=1, column=2, padx=5, pady=5)
         
-        ttk.Button(analytics_frame, text="Optimize Inventory", 
-                  command=self.show_optimization).grid(row=2, column=0, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Optimize Inventory", command=self.show_optimization).grid(row=2, column=0, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Plot Sales Trend", command=self.plot_sales_trend).grid(row=2, column=1, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Plot Top Products", command=self.plot_top_products).grid(row=2, column=2, padx=5, pady=5)
+        ttk.Button(analytics_frame, text="Plot Forecast", command=self.plot_forecast).grid(row=2, column=3, padx=5, pady=5)
 
-        self.analytics_text = tk.Text(frame, height=25, width=80)
+        self.analytics_text = tk.Text(frame, height=20, width=80)
         self.analytics_text.grid(row=1, column=0, padx=10, pady=10)
 
     def create_supply_widgets(self, frame):
@@ -203,21 +245,33 @@ class SariSariStoreApp:
         self.supply_text.grid(row=2, column=0, padx=10, pady=10)
 
     def refresh_inventory(self):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        for product in self.inventory.get_items():
-            self.tree.insert("", "end", values=product)
+        try:
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+            for product in self.inventory.get_items():
+                self.tree.insert("", "end", values=product)
+        except Exception as e:
+            print(f"Error in refresh_inventory: {str(e)}")
+            messagebox.showerror("Error", f"Failed to refresh inventory: {str(e)}")
 
     def refresh_suppliers(self):
-        for item in self.supplier_tree.get_children():
-            self.supplier_tree.delete(item)
-        for supplier in self.supply.get_suppliers():
-            self.supplier_tree.insert("", "end", values=supplier)
+        try:
+            for item in self.supplier_tree.get_children():
+                self.supplier_tree.delete(item)
+            for supplier in self.supply.get_suppliers():
+                self.supplier_tree.insert("", "end", values=supplier)
+        except Exception as e:
+            print(f"Error in refresh_suppliers: {str(e)}")
+            messagebox.showerror("Error", f"Failed to refresh suppliers: {str(e)}")
 
     def update_supplier_combo(self):
-        suppliers = self.supply.get_suppliers()
-        self.supplier_combo['values'] = [f"{s[0]}: {s[1]}" for s in suppliers]
-        self.supplier_combo.set("")
+        try:
+            suppliers = self.supply.get_suppliers()
+            self.supplier_combo['values'] = [f"{s[0]}: {s[1]}" for s in suppliers]
+            self.supplier_combo.set("")
+        except Exception as e:
+            print(f"Error in update_supplier_combo: {str(e)}")
+            messagebox.showerror("Error", f"Failed to update supplier combo: {str(e)}")
 
     def clear_entries(self):
         self.name_entry.delete(0, tk.END)
@@ -243,7 +297,7 @@ class SariSariStoreApp:
             messagebox.showerror("Error", "All fields except supplier are required")
             return
 
-        success, message = self.inventory.add_item(name, quantity, price, barcode, supplier_id)
+        success, message = self.inventory.add_item(name, quantity, price, barcode, supplier_id, self.user_id)
         if success:
             self.refresh_inventory()
             self.clear_entries()
@@ -259,7 +313,7 @@ class SariSariStoreApp:
             self.quantity_entry.insert(0, values[2])
             self.price_entry.insert(0, values[3])
             self.barcode_entry.insert(0, values[4])
-            self.supplier_combo.set(values[6] if values[6] else "")
+            self.supplier_combo.set(values[5] if values[5] else "")
 
     def update_product(self):
         selected_item = self.tree.selection()
@@ -279,7 +333,7 @@ class SariSariStoreApp:
             messagebox.showerror("Error", "All fields except supplier are required")
             return
 
-        success, message = self.inventory.update_item(product_id, name, quantity, price, barcode, supplier_id)
+        success, message = self.inventory.update_item(product_id, name, quantity, price, barcode, supplier_id, self.user_id)
         if success:
             self.refresh_inventory()
             self.clear_entries()
@@ -293,29 +347,78 @@ class SariSariStoreApp:
 
         product_id = self.tree.item(selected_item)['values'][0]
         if messagebox.askyesno("Confirm", "Are you sure you want to delete this product?"):
-            success, message = self.inventory.delete_item(product_id)
+            success, message = self.inventory.delete_item(product_id, self.user_id)
             if success:
                 self.refresh_inventory()
                 self.clear_entries()
             messagebox.showinfo("Result", message)
 
-    def scan_product(self, event=None):  # event=None allows both button and Enter key triggering
+    def show_transactions(self):
+        selected_item = self.tree.selection()
+        if not selected_item:
+            transactions = self.inventory.get_transaction_history()
+            report = "All Inventory Transactions\n-------------------------\n"
+            if not transactions:
+                report += "No transactions recorded"
+            for t in transactions:
+                report += f"Product: {t[6]}\nChange: {t[2]}\nAction: {t[3]}\nDate: {t[4]}\nUser: {t[7] if t[7] else 'Unknown'}\n\n"
+        else:
+            product_id = self.tree.item(selected_item)['values'][0]
+            transactions = self.inventory.get_transaction_history(product_id)
+            report = f"Transactions for Product ID {product_id}\n-------------------------\n"
+            if not transactions:
+                report += "No transactions recorded"
+            for t in transactions:
+                report += f"Change: {t[2]}\nAction: {t[3]}\nDate: {t[4]}\nUser: {t[5] if t[5] else 'Unknown'}\n\n"
+        self.transaction_text.delete(1.0, tk.END)
+        self.transaction_text.insert(tk.END, report)
+
+    def scan_product(self, event=None):
         barcode = self.scan_entry.get().strip()
         if not barcode:
             messagebox.showerror("Error", "Please enter or scan a barcode")
             return
-
-        success, message = self.pos.scan_item(barcode)
+        quantity = simpledialog.askinteger("Quantity", "Enter quantity:", minvalue=1, initialvalue=1)
+        if quantity is None:
+            return
+        success, message = self.pos.scan_item(barcode, quantity)
         if success:
             self.refresh_cart()
             self.scan_entry.delete(0, tk.END)
         messagebox.showinfo("Scan Result", message)
 
+    def camera_scan(self):
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            messagebox.showerror("Error", "Could not access camera")
+            return
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            barcodes = decode(frame)
+            if barcodes:
+                barcode = barcodes[0].data.decode('utf-8')
+                cap.release()
+                cv2.destroyAllWindows()
+                quantity = simpledialog.askinteger("Quantity", f"Enter quantity for {barcode}", minvalue=1, initialvalue=1)
+                if quantity:
+                    success, message = self.pos.scan_item(barcode, quantity)
+                    if success:
+                        self.refresh_cart()
+                    messagebox.showinfo("Scan Result", message)
+                break
+            cv2.imshow('Barcode Scanner', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        cap.release()
+        cv2.destroyAllWindows()
+
     def refresh_cart(self):
         for item in self.cart_tree.get_children():
             self.cart_tree.delete(item)
-        for item in self.pos.get_cart_items():
-            self.cart_tree.insert("", "end", values=(item[1], f"₱{item[3]:.2f}", item[4]))
+        for name, price, barcode, qty in self.pos.get_cart_items():
+            self.cart_tree.insert("", "end", values=(name, f"₱{price:.2f}", barcode, qty))
         self.total_label.config(text=f"Total: ₱{self.pos.get_cart_total():.2f}")
 
     def checkout(self):
@@ -376,7 +479,7 @@ class SariSariStoreApp:
             self.analytics_text.delete(1.0, tk.END)
             self.analytics_text.insert(tk.END, report)
         except Exception as e:
-            messagebox.showerror("Error", f"Forecasting failed: {e}")
+            messagebox.showerror("Error", f"Forecasting failed: {str(e)}")
 
     def show_optimization(self):
         selected_item = self.tree.selection()
@@ -390,7 +493,22 @@ class SariSariStoreApp:
             self.analytics_text.delete(1.0, tk.END)
             self.analytics_text.insert(tk.END, report)
         except Exception as e:
-            messagebox.showerror("Error", f"Optimization failed: {e}")
+            messagebox.showerror("Error", f"Optimization failed: {str(e)}")
+
+    def plot_sales_trend(self):
+        self.analytics.plot_sales_trend()
+
+    def plot_top_products(self):
+        self.analytics.plot_top_products()
+
+    def plot_forecast(self):
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "Please select a product from Inventory tab first")
+            return
+        product_id = int(self.tree.item(selected_item)['values'][0])
+        method = self.forecast_method.get()
+        self.analytics.plot_forecast(product_id, method=method)
 
     def add_supplier(self):
         name = self.supplier_name.get()
@@ -469,4 +587,8 @@ class SariSariStoreApp:
 if __name__ == "__main__":
     root = tk.Tk()
     app = SariSariStoreApp(root)
-    root.mainloop()
+    print("Starting Tkinter mainloop")
+    try:
+        root.mainloop()
+    except Exception as e:
+        print(f"Error in mainloop: {str(e)}")
